@@ -205,8 +205,7 @@ Resources:
           ]
         }
       MaxSessionDuration: 3600
-      ManagedPolicyArns: 
-        - !Ref IAMManagedPolicyS3Access
+      ManagedPolicyArns:
         - !Ref IAMManagedPolicyParameterStoreAccess
         - !Ref IAMManagedPolicyEC2Access
       Description: "Role for ansible runner"
@@ -250,32 +249,6 @@ Resources:
       InstanceProfileName: !Ref EC2RoleBastion
       Roles: 
         - !Ref EC2RoleBastion
-
-  IAMManagedPolicyS3Access:
-    Type: "AWS::IAM::ManagedPolicy"
-    Properties:
-      ManagedPolicyName: !Sub "${NamePrefix}-iap-s3-Access"
-      Path: "/"
-      PolicyDocument: !Sub |
-        {
-          "Version":"2012-10-17",
-          "Statement":[
-            {
-              "Effect":"Allow",
-              "Action":[
-                "s3:ListBucket",
-                "s3:GetObject",
-                "s3:PutObject",
-                "s3:PutObjectAcl",
-                "s3:DeleteObject"
-              ],
-              "Resource": [
-                "arn:aws:s3:::ansible-practice-202302",
-                "arn:aws:s3:::ansible-practice-202302/*"
-              ]
-            }
-          ]
-        }
 
   IAMManagedPolicyParameterStoreAccess:
     Type: "AWS::IAM::ManagedPolicy"
@@ -375,7 +348,6 @@ Resources:
           #Playbook download
           mkdir /home/ubuntu/ansible
           git clone https://github.com/Yunjun-Li/ansible-practice.git /home/ubuntu/ansible
-          # aws s3 cp s3://ansible-practice-202302/ /home/ubuntu/ansible --recursive
 
           #create static inventory file
           cat << EOF > /home/ubuntu/ansible/playbook/hosts.ini
