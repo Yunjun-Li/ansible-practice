@@ -374,7 +374,8 @@ Resources:
 
           #Playbook download
           mkdir /home/ubuntu/ansible
-          aws s3 cp s3://ansible-practice-202302/ /home/ubuntu/ansible --recursive
+          git clone https://github.com/Yunjun-Li/ansible-practice.git /home/ubuntu/ansible
+          # aws s3 cp s3://ansible-practice-202302/ /home/ubuntu/ansible --recursive
 
           #create static inventory file
           cat << EOF > /home/ubuntu/ansible/playbook/hosts.ini
