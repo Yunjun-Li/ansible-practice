@@ -1,0 +1,5 @@
+- include_tasks: set-sudoers.yml
+
+- include_tasks: create_group.yml
+
+- include_tasks: create_user.yml

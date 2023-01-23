@@ -1,0 +1,5 @@
+- include_tasks: install_apache.yml
+
+- include_tasks: set_apache.yml
+
+- include_tasks: depoly.yml

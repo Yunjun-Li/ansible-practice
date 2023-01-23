@@ -1,0 +1,10 @@
+- hosts:
+    - apache
+  become: yes
+  roles:
+    - role: fetch_file
+      vars:
+        target_file_list:
+          - /etc/apache2/apache2.conf
+          - /etc/apache2/ports.conf
+        dest_prefix: /tmp/fetch_files/{{ kind }}/{{ inventory_hostname }}

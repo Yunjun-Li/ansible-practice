@@ -1,0 +1,476 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+  Generator: "former2"
+Description: ""
+Parameters:
+  NamePrefix:
+    Type: String
+    Default: ansible-demo
+    Description: AWS resource name prefix
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: VPC CIDR
+  Subnet1Cidr:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: Subnet 1 CIDR
+  Subnet2Cidr:
+    Type: String
+    Default: 10.0.2.0/24
+    Description: Subnet 2 CIDR
+  Subnet1Az:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Subnet 1 AZ
+  Subnet2Az:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Subnet 2 AZ
+Resources:
+  EC2VPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: false
+      InstanceTenancy: "default"
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${NamePrefix}-vpc"
+
+  EC2Subnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Ref Subnet1Az
+      CidrBlock: !Ref Subnet1Cidr
+      VpcId: !Ref EC2VPC
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${NamePrefix}-subnet-1"
+
+  EC2Subnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Ref Subnet2Az
+      CidrBlock: !Ref Subnet2Cidr
+      VpcId: !Ref EC2VPC
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${NamePrefix}-subnet-2"
+
+  InternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${NamePrefix}-demo-igw"
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref EC2VPC
+
+  PublicRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref EC2VPC
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${NamePrefix}-public-route-table"
+  
+  PublicRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref EC2Subnet1
+  
+  PublicRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref EC2Subnet2
+
+  PublicEC2Route:
+    Type: "AWS::EC2::Route"
+    Properties:
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref PublicRouteTable
+
+  EC2SecurityGroupAnsibleRunner:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "sg for ansible runner"
+      GroupName: !Sub "${NamePrefix}-sg-ansible-runner"
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${NamePrefix}-sg-ansible-runner"
+      VpcId: !Ref EC2VPC
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          Description: "for SSH conect"
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: "tcp"
+        - CidrIp: "0.0.0.0/0"
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "icmp"
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "-1"
+
+  EC2SecurityGroupApache:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "sg for apache server"
+      GroupName: !Sub "${NamePrefix}-sg-apache"
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${NamePrefix}-sg-apache"
+      VpcId: !Ref EC2VPC
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref EC2SecurityGroupAnsibleRunner
+          SourceSecurityGroupOwnerId: !Ref AWS::AccountId
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: "tcp"
+        - SourceSecurityGroupId: !Ref EC2SecurityGroupBastion
+          SourceSecurityGroupOwnerId: !Ref AWS::AccountId
+          IpProtocol: "-1"
+          Description: Allow all traffic from same SG
+        - CidrIp: "0.0.0.0/0"
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "icmp"
+        - CidrIp: "0.0.0.0/0"
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: "tcp"
+        - CidrIp: "0.0.0.0/0"
+          FromPort: 8080
+          ToPort: 8080
+          IpProtocol: "tcp"
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "-1"
+
+  EC2SecurityGroupBastion:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "sg for bastion"
+      GroupName: !Sub "${NamePrefix}-sg-bastion"
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${NamePrefix}-sg-bastion"
+      VpcId: !Ref EC2VPC
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          Description: "for SSH conect"
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: "tcp"
+        - SourceSecurityGroupId: !Ref EC2SecurityGroupAnsibleRunner
+          SourceSecurityGroupOwnerId: !Ref AWS::AccountId
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: "tcp"
+        - CidrIp: "0.0.0.0/0"
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "icmp"
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "-1"
+
+  EC2RoleAnsibleRunner:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Path: "/"
+      RoleName: !Sub "${NamePrefix}-iar-ansible-runner"
+      AssumeRolePolicyDocument: |
+        {
+          "Version":"2012-10-17",
+          "Statement":[
+            {
+              "Effect":"Allow",
+              "Principal":
+                {
+                  "Service":"ec2.amazonaws.com"
+                },
+              "Action":"sts:AssumeRole"
+            }
+          ]
+        }
+      MaxSessionDuration: 3600
+      ManagedPolicyArns: 
+        - !Ref IAMManagedPolicyS3Access
+        - !Ref IAMManagedPolicyParameterStoreAccess
+        - !Ref IAMManagedPolicyEC2Access
+      Description: "Role for ansible runner"
+
+  EC2RoleBastion:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Path: "/"
+      RoleName: !Sub "${NamePrefix}-iar-bastion"
+      AssumeRolePolicyDocument: |
+        {
+          "Version":"2012-10-17",
+          "Statement":[
+            {
+              "Effect":"Allow",
+              "Principal":
+                {
+                  "Service":"ec2.amazonaws.com"
+                },
+              "Action":"sts:AssumeRole"
+            }
+          ]
+        }
+      MaxSessionDuration: 3600
+      ManagedPolicyArns:
+        - !Ref IAMManagedPolicyParameterStoreAccess
+      Description: "Role for bastion"
+
+  IAMInstanceProfileAnsibleRunner:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      InstanceProfileName: !Ref EC2RoleAnsibleRunner
+      Roles: 
+        - !Ref EC2RoleAnsibleRunner
+
+  IAMInstanceProfileBastion:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      InstanceProfileName: !Ref EC2RoleBastion
+      Roles: 
+        - !Ref EC2RoleBastion
+
+  IAMManagedPolicyS3Access:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      ManagedPolicyName: !Sub "${NamePrefix}-iap-s3-Access"
+      Path: "/"
+      PolicyDocument: !Sub |
+        {
+          "Version":"2012-10-17",
+          "Statement":[
+            {
+              "Effect":"Allow",
+              "Action":[
+                "s3:ListBucket",
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:PutObjectAcl",
+                "s3:DeleteObject"
+              ],
+              "Resource": [
+                "arn:aws:s3:::ansible-practice-202302",
+                "arn:aws:s3:::ansible-practice-202302/*"
+              ]
+            }
+          ]
+        }
+
+  IAMManagedPolicyParameterStoreAccess:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      ManagedPolicyName: !Sub "${NamePrefix}-iap-parameter-store-access"
+      Path: "/"
+      PolicyDocument: !Sub |
+        {
+          "Version":"2012-10-17",
+          "Statement":[
+            {
+              "Effect":"Allow",
+              "Action":[
+                "ssm:DescribeParameters",
+                "ssm:GetParameter"
+              ],
+              "Resource": [
+                "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/ec2/keypair/${KeyPair.KeyPairId}"
+              ]
+            }
+          ]
+        }
+
+  IAMManagedPolicyEC2Access:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      ManagedPolicyName: !Sub "${NamePrefix}-iap-ec2-access"
+      Path: "/"
+      PolicyDocument: !Sub |
+        {
+          "Version":"2012-10-17",
+          "Statement":[
+            {
+              "Effect":"Allow",
+              "Action":[
+                "ec2:DescribeInstances"
+              ],
+              "Resource": [ "*" ]
+            }
+          ]
+        }
+
+  KeyPair:
+    Type: 'AWS::EC2::KeyPair'
+    Properties:
+      KeyName: !Sub "${NamePrefix}-key-pair"
+
+  EC2InstanceAnsibleRunner:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: "ami-0ecc74eca1d66d8a6"
+      InstanceType: "t2.micro"
+      KeyName: !Ref KeyPair
+      IamInstanceProfile: !Ref IAMInstanceProfileAnsibleRunner
+      AvailabilityZone: !Ref Subnet1Az
+      Tenancy: "default"
+      EbsOptimized: false
+      SourceDestCheck: true
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: true
+            VolumeSize: 8
+            VolumeType: "gp3"
+            DeleteOnTermination: true
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref EC2Subnet1
+          GroupSet:
+            - !Ref EC2SecurityGroupAnsibleRunner
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${NamePrefix}-ansible-runner"
+        - Key: "kind"
+          Value: !Sub "ansible"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          #Ansible install
+          apt update
+          apt install software-properties-common
+          add-apt-repository --yes --update ppa:ansible/ansible
+          apt install ansible -y
+          ansible-galaxy collection install amazon.aws
+          curl "https://bootstrap.pypa.io/get-pip.py" -o "/tmp/get-pip.py"
+          python3 /tmp/get-pip.py
+          python3 -m pip install boto3 botocore
+
+          #AWS CLI install
+          apt install zip -y
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+          unzip /tmp/awscliv2.zip -d /tmp
+          /tmp/aws/install
+          aws --version
+
+          #Playbook download
+          mkdir /home/ubuntu/ansible
+          aws s3 cp s3://ansible-practice-202302/ /home/ubuntu/ansible --recursive
+
+          #create static inventory file
+          cat << EOF > /home/ubuntu/ansible/playbook/hosts.ini
+          [apache]
+          ansible-demo-server-1-apache ansible_host=${EC2InstanceServerApache.PrivateIp}
+          [bastion]
+          ansible-demo-server-2-bastion ansible_host=${EC2InstanceServerBastion.PrivateIp}
+          EOF
+
+          #Set Permission
+          chown -R ubuntu:ubuntu /home/ubuntu/ansible
+          find /home/ubuntu/ansible -type d -print | xargs chmod 755
+          find /home/ubuntu/ansible -type f -print | xargs chmod 644
+
+          #Get SSH private key and create key file
+          apt install -y jq
+          aws ssm get-parameter --name /ec2/keypair/${KeyPair.KeyPairId} --with-decryption | jq -r .Parameter.Value > /home/ubuntu/.ssh/private-key.pem
+
+
+  EC2InstanceServerApache:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: "ami-0ecc74eca1d66d8a6"
+      InstanceType: "t2.micro"
+      KeyName: !Ref KeyPair
+      AvailabilityZone: !Ref Subnet2Az
+      Tenancy: "default"
+      EbsOptimized: false
+      SourceDestCheck: true
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: true
+            VolumeSize: 8
+            VolumeType: "gp3"
+            DeleteOnTermination: true
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref EC2Subnet2
+          GroupSet:
+            - !Ref EC2SecurityGroupApache
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${NamePrefix}-server-1-apache"
+        - Key: "kind"
+          Value: !Sub "apache"
+
+  EC2InstanceServerBastion:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: "ami-0ecc74eca1d66d8a6"
+      IamInstanceProfile: !Ref IAMInstanceProfileBastion
+      InstanceType: "t2.micro"
+      KeyName: !Ref KeyPair
+      AvailabilityZone: !Ref Subnet2Az
+      Tenancy: "default"
+      EbsOptimized: false
+      SourceDestCheck: true
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: true
+            VolumeSize: 8
+            VolumeType: "gp3"
+            DeleteOnTermination: true
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref EC2Subnet2
+          GroupSet:
+            - !Ref EC2SecurityGroupBastion
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${NamePrefix}-server-2-bastion"
+        - Key: "kind"
+          Value: !Sub "bastion"
+
+Outputs:
+  AnsibleRunnerPublicIP:
+    Description: Public IP adress ansible runner
+    Value: !GetAtt EC2InstanceAnsibleRunner.PublicIp
+    Export:
+      Name: AnsibleRunnerPublicIP
+  ApacheServerPublicIP:
+    Description: Public IP adress Apache server
+    Value: !GetAtt EC2InstanceServerApache.PublicIp
+    Export:
+      Name: AnsibleServerPublicIP
+  BastionServerPublicIP:
+    Description: Public IP adress bastion server
+    Value: !GetAtt EC2InstanceServerBastion.PublicIp
+    Export:
+      Name: BastionServerPublicIP
+  KeyPairParameterStoreId:
+    Description: Parameter store id of Key Pair
+    Value: !GetAtt  KeyPair.KeyPairId
+    Export:
+      Name: KeyPairParameterStoreId

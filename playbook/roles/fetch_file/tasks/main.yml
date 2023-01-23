@@ -1,0 +1,8 @@
+- name: Fetch files from remote
+  ansible.builtin.fetch:
+    src: "{{ file_path }}"
+    dest: "{{dest_prefix}}{{ file_path }}"
+    flat: yes
+  loop: "{{ target_file_list }}"
+  loop_control:
+    loop_var: file_path

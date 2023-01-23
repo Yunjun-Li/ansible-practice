@@ -1,0 +1,27 @@
+- name: Create users
+  ansible.builtin.user:
+    name: "{{ user.name }}"
+    state: present
+    uid: "{{ user.uid }}"
+    group: "{{ user.group }}"
+    shell: "/bin/bash"
+    generate_ssh_key: yes
+  loop: "{{ personal_users }}"
+  loop_control:
+    loop_var: user
+
+- name: Set authorized_keys
+  ansible.builtin.shell:
+      cmd: "cat /home/{{ user.name }}/.ssh/id_rsa.pub > /home/{{ user.name }}/.ssh/authorized_keys "
+  loop: "{{ personal_users }}"
+  loop_control:
+    loop_var: user
+
+- name: Fetch ssh private key from remote
+  ansible.builtin.fetch:
+    src: "/home/{{ user.name }}/.ssh/id_rsa"
+    dest: "~/user_keys/{{ user.name }}/id_rsa"
+    flat: yes
+  loop: "{{ personal_users }}"
+  loop_control:
+    loop_var: user

@@ -1,0 +1,11 @@
+kind: bastion
+user_groups:
+  - { "name": "app_team", "gid": 5000 }
+  - { "name": "infra_team", "gid": 6000 }
+personal_users:
+  - { "name": "app_menber_name_1", "uid": 5001, "group": "app_team" }
+  - { "name": "app_menber_name_2", "uid": 5002, "group": "app_team" }
+  - { "name": "app_menber_name_3", "uid": 5003, "group": "app_team" }
+  - { "name": "infra_menber_name_1", "uid": 6001, "group": "infra_team" }
+  - { "name": "infra_menber_name_2", "uid": 6002, "group": "infra_team" }
+  - { "name": "infra_menber_name_3", "uid": 6003, "group": "infra_team" }

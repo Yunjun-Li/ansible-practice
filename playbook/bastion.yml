@@ -1,0 +1,5 @@
+- hosts:
+    - bastion
+  become: yes
+  roles:
+    - set_bastion_user_groups
