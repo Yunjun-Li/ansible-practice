@@ -346,8 +346,8 @@ Resources:
           aws --version
 
           #Playbook download
-          mkdir /home/ubuntu/ansible
-          git clone https://github.com/Yunjun-Li/ansible-practice.git /home/ubuntu/ansible
+          mkdir /home/ubuntu/ansible-practice
+          git clone https://github.com/Yunjun-Li/ansible-practice.git /home/ubuntu/ansible-practice
 
           #create static inventory file
           cat << EOF > /home/ubuntu/ansible/playbook/hosts.ini
