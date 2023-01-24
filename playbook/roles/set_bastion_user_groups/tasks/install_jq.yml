@@ -1,9 +1,0 @@
-# apt update
-- name: apt update
-  ansible.builtin.apt:
-    update_cache: yes
-
-# apt install apache2
-- name: Install Jq
-  ansible.builtin.apt:
-    name: jq

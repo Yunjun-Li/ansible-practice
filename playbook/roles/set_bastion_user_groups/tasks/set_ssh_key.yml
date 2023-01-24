@@ -1,9 +1,9 @@
 - name: Set SSH Key for Apache Server Connection
   ansible.builtin.shell:
-      cmd: |
-        aws ssm get-parameter --name /ec2/keypair/<KeyPairId> --with-decryption | jq -r .Parameter.Value > /home/{{ user.name }}/.ssh/private-key.pem
-        chown {{ user.name }}:{{ user.group }} /home/{{ user.name }}/.ssh/private-key.pem
-        chmod 0400 /home/{{ user.name }}/.ssh/private-key.pem
+    cmd: |
+      aws ssm get-parameter --name /ec2/keypair/<KeyPairId> --with-decryption | jq -r .Parameter.Value > /home/{{ user.name }}/.ssh/private-key.pem
+      chown {{ user.name }}:{{ user.group }} /home/{{ user.name }}/.ssh/private-key.pem
+      chmod 0400 /home/{{ user.name }}/.ssh/private-key.pem
   loop: "{{ personal_users }}"
   loop_control:
     loop_var: user
