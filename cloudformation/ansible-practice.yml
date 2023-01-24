@@ -358,9 +358,9 @@ Resources:
           EOF
 
           #Set Permission
-          chown -R ubuntu:ubuntu /home/ubuntu/ansible
-          find /home/ubuntu/ansible -type d -print | xargs chmod 755
-          find /home/ubuntu/ansible -type f -print | xargs chmod 644
+          chown -R ubuntu:ubuntu /home/ubuntu/ansible-practice
+          find /home/ubuntu/ansible-practice -type d -print | xargs chmod 755
+          find /home/ubuntu/ansible-practice -type f -print | xargs chmod 644
 
           #Get SSH private key and create key file
           apt install -y jq
