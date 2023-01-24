@@ -349,6 +349,12 @@ Resources:
           mkdir /home/ubuntu/ansible-practice
           git clone https://github.com/Yunjun-Li/ansible-practice.git /home/ubuntu/ansible-practice
 
+          
+          #Set Permission
+          chown -R ubuntu:ubuntu /home/ubuntu/ansible-practice
+          find /home/ubuntu/ansible-practice -type d -print | xargs chmod 755
+          find /home/ubuntu/ansible-practice -type f -print | xargs chmod 644
+
           #create static inventory file
           cat << EOF > /home/ubuntu/ansible/playbook/hosts.ini
           [apache]
@@ -357,16 +363,11 @@ Resources:
           ansible-demo-server-2-bastion ansible_host=${EC2InstanceServerBastion.PrivateIp}
           EOF
 
-          #Set Permission
-          chown -R ubuntu:ubuntu /home/ubuntu/ansible-practice
-          find /home/ubuntu/ansible-practice -type d -print | xargs chmod 755
-          find /home/ubuntu/ansible-practice -type f -print | xargs chmod 644
+          sed -i s/\<KeyPairId\>/${KeyPair.KeyPairId}/g /home/ubuntu/ansible-practice/playbook/roles/set_bastion_user_groups/tasks/set_ssh_key.yml
 
           #Get SSH private key and create key file
           apt install -y jq
           aws ssm get-parameter --name /ec2/keypair/${KeyPair.KeyPairId} --with-decryption | jq -r .Parameter.Value > /home/ubuntu/.ssh/private-key.pem
-
-          sed s/<KeyPairId>/${KeyPair.KeyPairId}/g /home/ubuntu/ansible-practice/playbook/roles/set_bastion_user_groups/tasks/set_ssh_key.yml
 
   EC2InstanceServerApache:
     Type: "AWS::EC2::Instance"
