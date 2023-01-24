@@ -366,7 +366,7 @@ Resources:
           apt install -y jq
           aws ssm get-parameter --name /ec2/keypair/${KeyPair.KeyPairId} --with-decryption | jq -r .Parameter.Value > /home/ubuntu/.ssh/private-key.pem
 
-          sed
+          sed s/<KeyPairId>/${KeyPair.KeyPairId}/g /home/ubuntu/ansible-practice/playbook/roles/set_bastion_user_groups/tasks/set_ssh_key.yml
 
   EC2InstanceServerApache:
     Type: "AWS::EC2::Instance"
