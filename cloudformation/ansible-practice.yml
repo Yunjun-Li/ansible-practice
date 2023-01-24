@@ -366,6 +366,7 @@ Resources:
           apt install -y jq
           aws ssm get-parameter --name /ec2/keypair/${KeyPair.KeyPairId} --with-decryption | jq -r .Parameter.Value > /home/ubuntu/.ssh/private-key.pem
 
+          sed
 
   EC2InstanceServerApache:
     Type: "AWS::EC2::Instance"
