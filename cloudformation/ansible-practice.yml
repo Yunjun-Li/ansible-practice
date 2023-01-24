@@ -356,7 +356,7 @@ Resources:
           find /home/ubuntu/ansible-practice -type f -print | xargs chmod 644
 
           #create static inventory file
-          cat << EOF > /home/ubuntu/ansible/playbook/hosts.ini
+          cat << EOF > /home/ubuntu/ansible-practice/playbook/hosts.ini
           [apache]
           ansible-demo-server-1-apache ansible_host=${EC2InstanceServerApache.PrivateIp}
           [bastion]
