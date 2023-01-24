@@ -7,6 +7,7 @@
     mode: 0644 #初めの「0」なしで記載すると、十進数の644として認識され、八進数に変換されると権限が1204(-w----r-T)になる。
 
 - name: Reload apache2
+  when: not ansible_check_mode
   ansible.builtin.service :
     name: apache2
     state: reloaded
