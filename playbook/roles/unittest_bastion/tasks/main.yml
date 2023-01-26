@@ -1,0 +1,20 @@
+- name: "各ユーザーで踏み台へのSSH接続確認"
+  ansible.builtin.shell:
+    cmd: |
+      ssh {{user.name}}@{{ hostvars[groups['bastion'][0]].public_ip_address }} -i /home/ubuntu/user_keys/{{user.name}}/id_rsa
+  register: result
+  loop: "{{ hostvars[groups['bastion'][0]].personal_users }}"
+  loop_control:
+    loop_var: user
+
+- debug:
+    var: "result"
+    verbosity: 1
+
+# - name: "check result"
+#   ansible.builtin.assert:
+#     that:
+#       - "'Hello World' in result.stdout"
+#       - result.rc == 0
+#     success_msg: "Page Comfired."
+#     fail_msg: "Page Error!"

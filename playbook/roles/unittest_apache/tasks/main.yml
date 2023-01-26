@@ -6,7 +6,7 @@
 
 - debug:
     var: "result"
-    verbosity: 0
+    verbosity: 1
 
 - name: "check result"
   ansible.builtin.assert:
