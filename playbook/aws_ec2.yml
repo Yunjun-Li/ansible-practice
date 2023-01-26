@@ -3,9 +3,9 @@ regions:
   - us-west-2
 include_filters:
   - instance-state-name : running
-exclude_filters:
-  - tag:kind:
-    - 'ansible'
+# exclude_filters:
+#   - tag:kind:
+#     - 'ansible'
 keyed_groups:
   - key: tags.kind
     separator: ""
