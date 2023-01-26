@@ -6,7 +6,7 @@
 
 - debug:
     msg: "{{ hostvars[groups['apache'][0]]['ansible_eth0']['ipv4']['address'] }}"
-    verbosity: 1
+    verbosity: 0
 
 # - name: "check result"
 #   ansible.builtin.assert:
