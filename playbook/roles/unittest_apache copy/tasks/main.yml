@@ -1,0 +1,17 @@
+- name: "curl:  bastion server -> apache server 8080 port"
+  ansible.builtin.shell:
+    cmd: |
+      curl http://{{ hostvars[groups['apache'][0]].public_ip_address }}:8080
+  register: result
+
+- debug:
+    var: "result"
+    verbosity: 0
+
+- name: "check result"
+  ansible.builtin.assert:
+    that:
+      - "'Hello World' in result.stdout"
+      - result.rc == 0
+    success_msg: "Page Comfired."
+    fail_msg: "Page Error!"

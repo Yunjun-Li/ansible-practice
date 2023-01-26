@@ -300,7 +300,7 @@ Resources:
     Type: "AWS::EC2::Instance"
     Properties:
       ImageId: "ami-0ecc74eca1d66d8a6"
-      InstanceType: "t2.micro"
+      InstanceType: "t3.medium"
       KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref IAMInstanceProfileAnsibleRunner
       AvailabilityZone: !Ref Subnet1Az
