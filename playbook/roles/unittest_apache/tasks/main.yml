@@ -8,8 +8,11 @@
     var: "result"
     verbosity: 0
 
-# - name: "check result"
-#   ansible.builtin.assert:
-#     that:
-#       - result
+- name: "check result"
+  ansible.builtin.assert:
+    that:
+      - "Hello World" in result.stdout
+      - result.rc == 0
+    fail_msg: "Page Comfired."
+    success_msg: "Page Error!"
 
