@@ -1,11 +1,11 @@
-- name: "curl:  bastion server -> apache server 8080 port"
-  ansible.builtin.shell:
-    cmd: |
-      curl http://{{apache_server_ip}}:8080
-  register: result
+# - name: "curl:  bastion server -> apache server 8080 port"
+#   ansible.builtin.shell:
+#     cmd: |
+#       curl http://{{apache_server_ip}}:8080
+#   register: result
 
 - debug:
-    var: result
+    msg: "{{ hostvars[groups['apache'][0]]['ansible_eth0']['ipv4']['address'] }}"
     verbosity: 1
 
 # - name: "check result"
