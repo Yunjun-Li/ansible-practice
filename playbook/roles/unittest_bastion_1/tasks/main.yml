@@ -20,4 +20,5 @@
     fail_msg: "[{{ ssh_result.cmd }}] failed."
   loop: "{{ result.results }}"
   loop_control:
+    label: "{{ results.cmd }}"
     loop_var: ssh_result
