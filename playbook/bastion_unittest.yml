@@ -1,0 +1,11 @@
+- hosts:
+    - ansible
+  become: yes
+  roles:
+    - role: unittest_bastion_1
+
+# - hosts:
+#     - bastion
+#   become: yes
+#   roles:
+#     - role: unittest_bastion_2
